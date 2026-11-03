@@ -102,7 +102,12 @@
         </div>
       </div>
     </section>
-<div id="katalog-reseleria" style="display: flex; flex-wrap: wrap; gap: 16px;"></div>
+    
+<h2>Katalog Produk Pilihan</h2>
+    <div id="katalog-reseleria" class="katalog-container">
+        <div class="loading-text">Memuat produk dari reseleria.com...</div>
+    </div>
+    
     <section class="occasion">
       <div class="container"><h2>Ada momen istimewa yang ingin dirayakan?</h2><p>Ceritakan kebutuhan Anda. Kami siap membantu memilih rangkaian bunga dan menyesuaikannya dengan acara serta pesan yang ingin disampaikan.</p><a class="btn" href="https://wa.me/6281321021706?text=Halo%20Reseleria%20Florist%2C%20saya%20ingin%20bertanya%20tentang%20pesanan%20bunga." target="_blank" rel="noopener">Mulai Pesan via WhatsApp →</a></div>
     </section>
@@ -134,30 +139,69 @@
   
 
 <script>
-async function loadKatalogReseleria() {
-  const container = document.getElementById('katalog-reseleria');
-  try {
-    // Ambil 10 produk terbaru dari reseleria.com
-    const response = await fetch('https://reseleria.com/wp-json/wc/v3/products?per_page=10');
-    const products = await response.json();
+        // Konfigurasi API WooCommerce Reseleria.com
+        const siteUrl = 'https://reseleria.com';
+        const consumerKey = 'ck_d88f6250855757251e04908866d60ff12a8e9718';    // Ganti dengan Consumer Key Anda
+        const consumerSecret = 'cs_a52f5e2ec22684c366cf0b5313ded2230fa57eed'; // Ganti dengan Consumer Secret Anda
 
-    container.innerHTML = products.map(product => {
-      const imgUrl = product.images.length > 0 ? product.images[0].src : 'https://via.placeholder.com/150';
-      return `
-        <div style="border: 1px solid #ddd; padding: 12px; width: 200px; border-radius: 8px;">
-          <img src="${imgUrl}" alt="${product.name}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 4px;">
-          <h4 style="margin: 8px 0; font-size: 14px;">${product.name}</h4>
-          <p style="color: #e67e22; font-weight: bold; margin: 4px 0;">Rp ${parseInt(product.price || 0).toLocaleString('id-ID')}</p>
-          <a href="${product.permalink}" target="_blank" style="display: block; text-align: center; background: #0073aa; color: #fff; text-decoration: none; padding: 6px; border-radius: 4px; font-size: 12px; margin-top: 8px;">Beli Sekarang</a>
-        </div>
-      `;
-    }).join('');
-  } catch (error) {
-    container.innerHTML = '<p>Gagal memuat katalog produk.</p>';
-    console.error('Error fetching REST API WooCommerce:', error);
-  }
-}
+        async function loadKatalog() {
+            const container = document.getElementById('katalog-reseleria');
+            
+            // Membuat header otentikasi Basic Auth menggunakan btoa()
+            const credentials = btoa(`${consumerKey}:${consumerSecret}`);
+            
+            // Endpoint untuk mengambil 12 produk terbaru
+            const endpoint = `${siteUrl}/wp-json/wc/v3/products?per_page=12&orderby=date&order=desc`;
 
-loadKatalogReseleria();
-</script>
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Basic ${credentials}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Gagal mengambil data. HTTP Status: ${response.status}`);
+                }
+
+                const products = await response.json();
+
+                if (products.length === 0) {
+                    container.innerHTML = '<div class="error-text">Tidak ada produk ditemukan.</div>';
+                    return;
+                }
+
+                // Render produk ke dalam HTML grid
+                container.innerHTML = products.map(product => {
+                    const imgUrl = product.images.length > 0 ? product.images[0].src : 'https://via.placeholder.com/150';
+                    const name = product.name;
+                    // Format harga ke Rupiah
+                    const price = product.price ? parseInt(product.price).toLocaleString('id-ID') : '0';
+                    const permalink = product.permalink;
+
+                    return `
+                        <div class="product-card">
+                            <div>
+                                <img src="${imgUrl}" alt="${name}">
+                                <div class="product-title" title="${name}">${name}</div>
+                            </div>
+                            <div>
+                                <div class="product-price">Rp ${price}</div>
+                                <a href="${permalink}" target="_blank" class="product-btn">Beli Sekarang</a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `<div class="error-text">Gagal memuat katalog produk. Periksa kembali Consumer Key dan koneksi Anda.</div>`;
+            }
+        }
+
+        // Jalankan fungsi saat halaman dimuat
+        loadKatalog();
+    </script>
 </html>
