@@ -222,8 +222,8 @@
 <script>
         // Konfigurasi API WooCommerce Reseleria.com
         const siteUrl = 'https://reseleria.com';
-        const consumerKey = 'ck_d88f6250855757251e04908866d60ff12a8e9718';    // Ganti dengan Consumer Key Anda
-        const consumerSecret = 'cs_a52f5e2ec22684c366cf0b5313ded2230fa57eed'; // Ganti dengan Consumer Secret Anda
+        const consumerKey = 'ck_d88f6250855757251e04908866d60ff12a8e9718';    
+        const consumerSecret = 'cs_a52f5e2ec22684c366cf0b5313ded2230fa57eed'; 
 
         async function loadKatalog() {
             const container = document.getElementById('katalog-reseleria');
@@ -231,8 +231,15 @@
             // Membuat header otentikasi Basic Auth menggunakan btoa()
             const credentials = btoa(`${consumerKey}:${consumerSecret}`);
             
-            // Endpoint untuk mengambil 12 produk terbaru
-            const endpoint = `${siteUrl}/wp-json/wc/v3/products?per_page=12&orderby=date&order=desc`;
+            // -----------------------------------------------------------------
+            // ATUR KATEGORI DI SINI:
+            // Ganti angka 15 dengan ID kategori yang ingin Anda tampilkan.
+            // Contoh multi-kategori: gunakan koma (misal: category=15,20)
+            // -----------------------------------------------------------------
+            const categoryID = 363; 
+
+            // Endpoint dengan tambahan parameter &category=
+            const endpoint = `${siteUrl}/wp-json/wc/v3/products?per_page=12&category=${categoryID}&orderby=date&order=desc`;
 
             try {
                 const response = await fetch(endpoint, {
@@ -250,7 +257,7 @@
                 const products = await response.json();
 
                 if (products.length === 0) {
-                    container.innerHTML = '<div class="error-text">Tidak ada produk ditemukan.</div>';
+                    container.innerHTML = '<div class="error-text">Tidak ada produk ditemukan pada kategori ini.</div>';
                     return;
                 }
 
